@@ -1,2 +1,5 @@
 __pycache__
 venv
+templates
+.env
+migrations/versions/e4b03d2121a5_database_creation.py
