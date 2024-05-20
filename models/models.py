@@ -1,10 +1,10 @@
-from sqlalchemy import MetaData, Table, Column, Integer, String, TIMESTAMP, ForeignKey, Date
+from sqlalchemy import MetaData, Table, Column, Integer, String, TIMESTAMP, ForeignKey, Date, Boolean
 from datetime import datetime
 
 metadata = MetaData()
 
-roles = Table(
-    "roles",
+role = Table(
+    "role",
     metadata,
     Column("id", Integer, primary_key=True),
     Column("title", String, nullable=False),
@@ -17,33 +17,36 @@ typevication = Table(
     Column("title", String, nullable=False),
 )
 
-workers = Table(
-    "workers",
+user = Table(
+    "user",
     metadata,
     Column("id", Integer, primary_key=True),
     Column("name", String, nullable=False),
     Column("login", String, nullable=False),
-    Column("password", String, nullable=False),
+    Column("hashed_password", String, nullable=False),
     Column("email", String, nullable=False),
-    Column("role_id", Integer, ForeignKey("roles.id")),
+    Column("role_id", Integer, ForeignKey(role.c.id)),
     Column("date_reg", TIMESTAMP, default=datetime.utcnow),
+    Column("is_active", Boolean, default=True, nullable=False),
+    Column("is_superuser", Boolean, default=False, nullable=False),
+    Column("is_verified", Boolean, default=False, nullable=False),
 )
 
-depts = Table(
-    "depts",
+dept = Table(
+    "dept",
     metadata,
     Column("id", Integer, primary_key=True),
     Column("title", String, nullable=False),
-    Column("worker_id", Integer, ForeignKey("workers.id")),
-    Column("role_id", Integer, ForeignKey("roles.id")),
+    Column("user_id", Integer, ForeignKey(user.c.id)),
+    Column("role_id", Integer, ForeignKey(role.c.id)),
 )
 
-vicaions = Table(
-    "vications",
+vicaion = Table(
+    "vication",
     metadata,
     Column("id", Integer, primary_key=True),
     Column("typevication_id", Integer, ForeignKey("typeVication.id")),
-    Column("workers_id", Integer, ForeignKey("workers.id")),
+    Column("user_id", Integer, ForeignKey(user.c.id)),
     Column("startdate", Date, nullable=False),
     Column("enddate", Date, nullable=False),
 )
