@@ -3,3 +3,4 @@ venv
 templates
 .env
 migrations/versions/
+query.sql
