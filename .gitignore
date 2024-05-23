@@ -4,4 +4,4 @@ templates
 .env
 migrations/versions/
 query.sql
-auth/
+src/auth/
