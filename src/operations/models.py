@@ -44,4 +44,3 @@ vicaion = Table(
     Column("startdate", Date, nullable=False),
     Column("enddate", Date, nullable=False),
 )
-
