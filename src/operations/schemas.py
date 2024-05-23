@@ -20,4 +20,3 @@ class DeptCreate(BaseModel):
     title: str
     worker_id: int
     post_id: int
-    
