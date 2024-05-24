@@ -1,12 +1,12 @@
-from sqlalchemy import MetaData, Table, Column, Integer, String, ForeignKey, Date
-
-metadata = MetaData()
+from sqlalchemy import Table, Column, Integer, String, ForeignKey, Date
+from database import metadata
 
 typevication = Table(
     "typeVication",
     metadata,
     Column("id", Integer, primary_key=True),
     Column("title", String, nullable=False),
+    extend_existing=True
 )
 
 post = Table(
@@ -14,6 +14,7 @@ post = Table(
     metadata,
     Column("id", Integer, primary_key=True),
     Column("title", String, nullable=False),
+    extend_existing=True
 )
 
 worker = Table(
@@ -24,6 +25,7 @@ worker = Table(
     Column("login", String, nullable=False),
     Column("password", String, nullable=False),
     Column("email", String, nullable=False),
+    extend_existing=True
 )
 
 dept = Table(
@@ -33,6 +35,7 @@ dept = Table(
     Column("title", String, nullable=False),
     Column("worker_id", Integer, ForeignKey(worker.c.id)),
     Column("post_id", Integer, ForeignKey(post.c.id)),
+    extend_existing=True
 )
 
 vicaion = Table(
@@ -43,4 +46,5 @@ vicaion = Table(
     Column("worker_id", Integer, ForeignKey(worker.c.id)),
     Column("startdate", Date, nullable=False),
     Column("enddate", Date, nullable=False),
+    extend_existing=True
 )
