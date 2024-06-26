@@ -1,9 +1,6 @@
 __pycache__
-1venv
+venv
 .env
-query.sql
-docker
+.env-non-dev
 migrations/versions/
-Dockerfile
-docker-compose.yml
-templates
+query.sql
