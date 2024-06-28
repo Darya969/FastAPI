@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  app:
+    build: 
+      context: .
+    env_file:
+      - .env-non-dev
+    container_name: fastapi_app
+    command: ["/fastapi_app/docker/app.sh"]
+    environment:
+      - DB_HOST=database
+      - DB_PORT=${DB_PORT}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASS}
+    ports: 
+      - 1221:8000
+    depends_on:
+      - database
+      - redis
+
+  database:
+    image: postgres:15
+    container_name: database_app
+    ports:
+      - 5433:5432
+    # command: -p 5433
+    # expose:
+     # - 5433
+    env_file:
+      - .env-non-dev
+
+  redis:
+    image: redis:7
+    container_name: redis_app
+    command: --port 5370
+    expose:
+      - 5370

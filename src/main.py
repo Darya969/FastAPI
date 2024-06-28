@@ -3,7 +3,7 @@ from operations.worker_q import worker_q as router_worker
 from operations.typeVication import typeVication as router_typeVication
 from operations.post_q import post_q as router_post
 from operations.dept_q import dept_q as router_dept
-from operations.router import vication_q as router_vication
+from operations.vication_q import vication_q as router_vication
 
 app = FastAPI()
 

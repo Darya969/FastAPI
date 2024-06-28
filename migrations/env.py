@@ -1,12 +1,21 @@
 from logging.config import fileConfig
+
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
-from alembic import context
-from src.config import DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASS
-from src.database import metadata
-import os, sys
 
-sys.path.append(os.path.join(sys.path[0], 'src'))
+from alembic import context
+from src.database import metadata
+
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+DB_HOST = os.environ.get("DB_HOST")
+DB_PORT = os.environ.get("DB_PORT")
+DB_NAME = os.environ.get("DB_NAME")
+DB_USER = os.environ.get("DB_USER")
+DB_PASS = os.environ.get("DB_PASS")
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -15,8 +24,8 @@ config = context.config
 section = config.config_ini_section
 config.set_section_option(section, "DB_HOST", DB_HOST)
 config.set_section_option(section, "DB_PORT", DB_PORT)
-config.set_section_option(section, "DB_NAME", DB_NAME)
 config.set_section_option(section, "DB_USER", DB_USER)
+config.set_section_option(section, "DB_NAME", DB_NAME)
 config.set_section_option(section, "DB_PASS", DB_PASS)
 
 # Interpret the config file for Python logging.

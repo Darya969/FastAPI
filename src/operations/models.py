@@ -1,4 +1,4 @@
-from sqlalchemy import Table, Column, Integer, String, ForeignKey, Date
+from sqlalchemy import Table, Column, Integer, String, ForeignKey, Date, MetaData
 from database import metadata
 
 typevication = Table(
@@ -21,7 +21,9 @@ worker = Table(
     "worker",
     metadata,
     Column("id", Integer, primary_key=True),
-    Column("fullname", String, nullable=False),
+    Column("surname", String, nullable=False),
+    Column("name", String, nullable=False),
+    Column("patronymic", String, nullable=False),
     Column("login", String, nullable=False),
     Column("password", String, nullable=False),
     Column("email", String, nullable=False),

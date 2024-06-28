@@ -10,48 +10,44 @@ dept_q = APIRouter(
 )
 
 @dept_q.post('/create')
-async def add_dept(id: int, new_title: str, new_worker: str, new_post: str, 
+async def add_dept(new_title: str, new_worker_id: int, new_post: str, 
                    session: AsyncSession = Depends(get_async_session)):
-    
-    stmt_worker_id = select(worker.c.id).where(worker.c.fullname == new_worker)
     stmt_post_id = select(post.c.id).where(post.c.title == new_post)
 
-    stmt_existing_worker = select(dept.c.id).where(dept.c.worker_id == stmt_worker_id)
+    stmt_existing_worker = select(dept.c.id).where(dept.c.worker_id == new_worker_id)
     existing_worker = await session.execute(stmt_existing_worker)
     existing_worker = existing_worker.scalar()
 
     if existing_worker:
-        return {'error': f'Сотрудник "{new_worker}" уже существует.'}
+        return {'error': f'Сотрудник уже существует.'}
 
     if new_post == "руководитель" or new_post == "главный бухгалтер":
         stmt_post_count = select(func.count()).where(
             and_(dept.c.title == new_title, post.c.title == new_post)
         )
         post_count = await session.execute(stmt_post_count)
-        if post_count.scalar() > 1:
+        if post_count.scalar() > 0:
             return {'status': 'Error', 'message': f'В "{new_title}" должность "{new_post}" уже занята.'}
 
-    stmt = insert(dept).values(id=id, title=new_title, worker_id=stmt_worker_id, post_id=stmt_post_id)
+    stmt = insert(dept).values(title=new_title, worker_id=new_worker_id, post_id=stmt_post_id)
     await session.execute(stmt)
     await session.commit()
     
-    return {'status': 'OK'}
+    new_dept = select(dept).where(dept.c.title == new_title, dept.c.worker_id == new_worker_id, dept.c.post_id == stmt_post_id)
+    insert_dept = await session.execute(new_dept)
+    return {'status': 'OK', 'data': insert_dept.mappings().all()}
 
 @dept_q.get("/search")
 async def get_dept(dept_title: str, session: AsyncSession = Depends(get_async_session)):
-    query = select(dept.c.id, dept.c.title, worker.c.fullname, post.c.title).select_from(
+    query = select(dept.c.id, dept.c.title, worker.c.surname, worker.c.name, worker.c.patronymic, post.c.title).select_from(
     dept.join(worker, worker.c.id == dept.c.worker_id).join(post, post.c.id == dept.c.post_id)).\
         where(dept.c.title == dept_title)
     result = await session.execute(query)
     return result.mappings().all()
 
 @dept_q.post('/update')
-async def update_dept(new_title: str, worker_n: str, post_n: str, old_title: str, old_worker: str, 
-                      old_post: str, session: AsyncSession = Depends(get_async_session)):
-    
-    post_exists = await session.execute(select(dept).where(and_(dept.c.title == new_title, or_(dept.c.post_id == 1, dept.c.post_id == 2))))
-    post_exists = post_exists.fetchall()
-
+async def update_dept(old_dept_id: int, new_title: str | None = None, worker_n: int | None = None, 
+                      post_n: str | None = None, session: AsyncSession = Depends(get_async_session)):    
     if post_n == "руководитель" or post_n == "главный бухгалтер":
         stmt_post_count = select(func.count()).where(
             and_(dept.c.title == new_title, post.c.title == post_n)
@@ -60,16 +56,27 @@ async def update_dept(new_title: str, worker_n: str, post_n: str, old_title: str
         if post_count.scalar() > 1:
             return {'status': 'Error', 'message': f'В "{new_title}" должность "{post_n}" уже занята.'}
     
-    stmt_worker_id_new = select(worker.c.id).where(worker.c.fullname == worker_n)
     stmt_post_id_new = select(post.c.id).where(post.c.title == post_n)
 
-    stmt_worker_id_old = select(worker.c.id).where(worker.c.fullname == old_worker)
-    stmt_post_id_old = select(post.c.id).where(post.c.title == old_post)
-   
-    stmt_update = update(dept) \
-        .where(and_(dept.c.title == old_title,
-                    dept.c.worker_id == stmt_worker_id_old, dept.c.post_id == stmt_post_id_old)) \
-        .values(title=new_title, worker_id=stmt_worker_id_new, post_id=stmt_post_id_new)
-    await session.execute(stmt_update)
-    await session.commit()
-    return {'status': 'OK'}
+    update_data = {}
+    if new_title is not None:
+        update_data['title'] = new_title
+        stmt_dept_count = select(func.count()).where(
+                and_(dept.c.title == new_title, or_(post.c.title == "руководитель", 
+                                                    post.c.title == "главный бухгалтер")))
+        dept_count = await session.execute(stmt_dept_count)
+        if dept_count.scalar() > 0:
+            return {'status': 'Error', 'message': f'В "{new_title}" должность уже занята.'}
+    if worker_n is not None:
+        update_data['worker_id'] = worker_n
+    if post_n is not None:
+        update_data['post_id'] = stmt_post_id_new
+
+    if update_data:            
+        stmt_update = (update(dept).where(dept.c.id == old_dept_id).values(**update_data).returning(dept))
+        await session.execute(stmt_update)
+        await session.commit()
+    
+    new_dept = select(dept).where(dept.c.id == old_dept_id)
+    insert_dept = await session.execute(new_dept)
+    return {'status': 'OK', 'data': insert_dept.mappings().all()}
