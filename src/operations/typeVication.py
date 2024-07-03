@@ -11,19 +11,19 @@ typeVication = APIRouter(
 )
 
 @typeVication.post('/create')
-async def add_typeVication(new_title: str, session: AsyncSession = Depends(get_async_session)):
-    stmt_existing_worker = select(typevication.c.id).where(typevication.c.title.ilike(new_title))
+async def add_typeVication(title: str, session: AsyncSession = Depends(get_async_session)):
+    stmt_existing_worker = select(typevication.c.id).where(typevication.c.title.ilike(title))
     existing_worker = await session.execute(stmt_existing_worker)
     existing_worker = existing_worker.scalar()
 
     if existing_worker:
-        return {'error': f'Тип отсутствия "{new_title}" уже есть в базе данных.'}
+        return {'error': f'Тип отсутствия "{title}" уже есть в базе данных.'}
         
-    stmt = insert(typevication).values(title=new_title)
+    stmt = insert(typevication).values(title=title)
     await session.execute(stmt)
     await session.commit()
 
-    new_type = select(typevication).where(typevication.c.title == new_title)
+    new_type = select(typevication).where(typevication.c.title == title)
     insert_worker = await session.execute(new_type)
     return {'status': 'OK', 'data': insert_worker.mappings().all()}
 
@@ -34,15 +34,15 @@ async def get_typeVication(session: AsyncSession = Depends(get_async_session)):
     return result.mappings().all()
 
 @typeVication.post('/update')
-async def update_typeVication(old_type_id: int, new_title: str, session: AsyncSession = Depends(get_async_session)):
-    stmt_existing_worker = select(typevication.c.id).where(typevication.c.title.ilike(new_title))
+async def update_typeVication(old_type_id: int, title: str, session: AsyncSession = Depends(get_async_session)):
+    stmt_existing_worker = select(typevication.c.id).where(typevication.c.title.ilike(title))
     existing_worker = await session.execute(stmt_existing_worker)
     existing_worker = existing_worker.scalar()
 
     if existing_worker:
-        return {'error': f'Тип отсутствия "{new_title}" уже есть в базе данных.'}
+        return {'error': f'Тип отсутствия "{title}" уже есть в базе данных.'}
     
-    stmt =  update(typevication).values(title=new_title).where(typevication.c.id == old_type_id)
+    stmt =  update(typevication).values(title=title).where(typevication.c.id == old_type_id)
     await session.execute(stmt)
     await session.commit()
     return {'status': 'OK'}

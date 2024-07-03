@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, insert, update, and_, or_, func
 from database import get_async_session
-from operations.models import worker, post, dept
+from operations.models import post, dept
 
 dept_q = APIRouter(
     prefix="/dept",
@@ -10,38 +10,37 @@ dept_q = APIRouter(
 )
 
 @dept_q.post('/create')
-async def add_dept(new_title: str, new_worker_id: int, new_post: str, 
+async def add_dept(title: str, worker_id: int, post_d: str, 
                    session: AsyncSession = Depends(get_async_session)):
-    stmt_post_id = select(post.c.id).where(post.c.title == new_post)
+    stmt_post_id = select(post.c.id).where(post.c.title == post_d)
 
-    stmt_existing_worker = select(dept.c.id).where(dept.c.worker_id == new_worker_id)
+    stmt_existing_worker = select(dept.c.id).where(dept.c.worker_id == worker_id)
     existing_worker = await session.execute(stmt_existing_worker)
     existing_worker = existing_worker.scalar()
 
     if existing_worker:
         return {'error': f'Сотрудник уже существует.'}
 
-    if new_post == "руководитель" or new_post == "главный бухгалтер":
+    if post_d == "руководитель" or post_d == "главный бухгалтер":
         stmt_post_count = select(func.count()).where(
-            and_(dept.c.title == new_title, post.c.title == new_post)
+            and_(dept.c.title == title, post.c.title == post_d)
         )
         post_count = await session.execute(stmt_post_count)
         if post_count.scalar() > 0:
-            return {'status': 'Error', 'message': f'В "{new_title}" должность "{new_post}" уже занята.'}
+            return {'status': 'Error', 'message': f'В "{title}" должность "{post_d}" уже занята.'}
 
-    stmt = insert(dept).values(title=new_title, worker_id=new_worker_id, post_id=stmt_post_id)
+    stmt = insert(dept).values(title=title, worker_id=worker_id, post_id=stmt_post_id)
     await session.execute(stmt)
     await session.commit()
     
-    new_dept = select(dept).where(dept.c.title == new_title, dept.c.worker_id == new_worker_id, dept.c.post_id == stmt_post_id)
+    new_dept = select(dept).where(dept.c.title == title, dept.c.worker_id == worker_id, dept.c.post_id == stmt_post_id)
     insert_dept = await session.execute(new_dept)
     return {'status': 'OK', 'data': insert_dept.mappings().all()}
 
 @dept_q.get("/search")
 async def get_dept(dept_title: str, session: AsyncSession = Depends(get_async_session)):
-    query = select(dept.c.id, dept.c.title, worker.c.surname, worker.c.name, worker.c.patronymic, post.c.title).select_from(
-    dept.join(worker, worker.c.id == dept.c.worker_id).join(post, post.c.id == dept.c.post_id)).\
-        where(dept.c.title == dept_title)
+    query = select(dept.c.id, dept.c.title, dept.c.worker_id, post.c.title).select_from(
+        dept.join(post, post.c.id == dept.c.post_id)).where(dept.c.title == dept_title)
     result = await session.execute(query)
     return result.mappings().all()
 
