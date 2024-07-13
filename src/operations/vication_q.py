@@ -52,12 +52,12 @@ async def add_vication(new_typevication: str, new_worker_id: int, new_startdate:
     return {'status': 'OK', 'data': insert_vication.mappings().all()}
 
 @vication_q.get("/search")
-async def get_vication(name: str, session: AsyncSession = Depends(get_async_session)):
-    query = select(vicaion.c.id, typevication.c.title, worker.c.fullname, vicaion.c.startdate, 
-                   vicaion.c.enddate).select_from(
+async def get_vication(surname: str, name: str, patronymic: str, session: AsyncSession = Depends(get_async_session)):
+    query = select(vicaion.c.id, typevication.c.title, worker.c.surname, worker.c.name, worker.c.patronymic,
+                   vicaion.c.startdate, vicaion.c.enddate).select_from(
         vicaion.join(typevication, typevication.c.id == vicaion.c.typevication_id)
         .join(worker, worker.c.id == vicaion.c.worker_id)).\
-        where(worker.c.fullname == name)
+        where(and_(worker.c.surname == surname, worker.c.name == name, worker.c.patronymic == patronymic))
     result = await session.execute(query)
     return result.mappings().all()
 
